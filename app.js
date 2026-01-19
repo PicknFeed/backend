@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -14,10 +15,14 @@ const authMiddleware = require('./middleware/auth');
 const profileController = require('./controllers/profileController');
 
 const evaluationRoutes = require('./routes/evaluation');
+const resumeRoutes = require('./routes/resumes')
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// 정적 파일 서빙 (이력서 업로드 파일 접근)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Logging
 app.use((req, res, next) => {
@@ -52,5 +57,8 @@ app.post('/api/profile', authMiddleware, profileController.update);
 
 // evaluation 진짜 구현
 app.use('/api/evaluation', evaluationRoutes);
+
+// 이력서 업로드 라우트
+app.use('/api/resumes', resumeRoutes);
 
 module.exports = app;
