@@ -5,7 +5,7 @@ const pool = require('../config/db');
 exports.getCompanies = async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      `SELECT id, name, position, skills_json
+      `SELECT id, name, position, skills_json, description
        FROM companies
        ORDER BY id DESC`
     );
@@ -15,6 +15,7 @@ exports.getCompanies = async (req, res) => {
       name: r.name,
       position: r.position || '',
       skills: r.skills_json ? JSON.parse(r.skills_json) : [],
+      description: r.description || '',
     }));
 
     res.json(result);
