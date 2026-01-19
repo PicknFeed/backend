@@ -44,6 +44,49 @@ CREATE TABLE IF NOT EXISTS feeds (
     ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- companies (기업 목록)
+CREATE TABLE IF NOT EXISTS companies (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  position VARCHAR(100) NOT NULL,
+  skills_json JSON NULL
+) ENGINE=InnoDB;
+
+-- people (개인 목록)
+CREATE TABLE IF NOT EXISTS people (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  position VARCHAR(100) NOT NULL,
+  skills_json JSON NULL
+) ENGINE=InnoDB;
+
+-- match_requests (매칭 요청)
+CREATE TABLE IF NOT EXISTS match_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,          -- 개인(로그인 유저)
+  company_id INT NOT NULL,
+  status ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+  INDEX idx_user (user_id),
+  INDEX idx_company (company_id)
+) ENGINE=InnoDB;
+
+-- evaluations (평가)
+CREATE TABLE IF NOT EXISTS evaluations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  request_id INT NOT NULL,
+  evaluator VARCHAR(50) NOT NULL DEFAULT 'company',
+  target VARCHAR(50) NOT NULL DEFAULT 'person',
+  score INT NOT NULL,
+  comment TEXT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (request_id) REFERENCES match_requests(id) ON DELETE CASCADE,
+  INDEX idx_req (request_id)
+) ENGINE=InnoDB;
+
+
 -- ===== 데모 계정 =====
 -- 비밀번호: 1234
 -- bcrypt 해시 (cost=10)
@@ -61,3 +104,11 @@ SELECT id, '' FROM users WHERE email IN ('user@test.com','admin@test.com');
 
 USE picknfeed;
 SELECT id, email, name, role, created_at FROM users;
+
+INSERT INTO companies (name, position, skills_json) VALUES
+('PicknFeed', 'Flutter Developer', JSON_ARRAY('Dart','Flutter','REST')),
+('FusionCrew', 'Backend Node.js', JSON_ARRAY('Node.js','Express','MySQL'));
+
+INSERT INTO people (name, position, skills_json) VALUES
+('이다하', 'Backend', JSON_ARRAY('Node.js','MySQL')),
+('양은겸', 'Frontend', JSON_ARRAY('Flutter','UI','GetX'));
