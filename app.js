@@ -18,4 +18,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/feeds', feedRoutes);
 app.use('/api/admin', adminRoutes);
 
+app.use((req, res, next) => {
+  console.log(`[REQ] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 module.exports = app;

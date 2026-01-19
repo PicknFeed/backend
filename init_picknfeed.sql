@@ -1,4 +1,4 @@
--- Pick&Feed 데이터베이스 초기화 스크립트
+feedsfeedsprofilesprofilesusersusers-- Pick&Feed 데이터베이스 초기화 스크립트
 -- 사용법: MySQL Workbench에서 열어서 전체 실행(⚡)
 
 -- DB 생성
@@ -58,3 +58,6 @@ INSERT INTO users (email, password, name, username, role) VALUES
 -- 기본 프로필 생성
 INSERT INTO profiles (user_id, resume_text)
 SELECT id, '' FROM users WHERE email IN ('user@test.com','admin@test.com');
+
+USE picknfeed;
+SELECT id, email, name, role, created_at FROM users;
