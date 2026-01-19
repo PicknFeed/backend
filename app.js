@@ -5,22 +5,53 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const feedRoutes = require('./routes/feeds');
-const adminRoutes = require('./routes/admin');
+// const adminRoutes = require('./routes/admin'); // 잠시 비활성화 or 유지
+
+// New Controllers
+const dataController = require('./controllers/dataController');
+const requestController = require('./controllers/requestController');
+const authMiddleware = require('./middleware/auth');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/ping', (req, res) => res.json({ ok: true }));
-
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/feeds', feedRoutes);
-app.use('/api/admin', adminRoutes);
-
+// Logging
 app.use((req, res, next) => {
   console.log(`[REQ] ${req.method} ${req.originalUrl}`);
   next();
+});
+
+app.get('/api/ping', (req, res) => res.json({ ok: true }));
+
+// Auth & Users
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+
+// Old Feed routes (유지)
+app.use('/api/feeds', feedRoutes);
+
+// === New Minix Routes ===
+// 1. Data (Public or Protected)
+app.get('/api/companies', authMiddleware, dataController.getCompanies);
+app.get('/api/people', authMiddleware, dataController.getPeople);
+
+// 2. Personal Requests
+app.get('/api/personal/requests', authMiddleware, requestController.getMyRequests);
+app.post('/api/personal/requests', authMiddleware, requestController.createRequest);
+
+// 3. Company Requests
+app.get('/api/company/requests', authMiddleware, requestController.getCompanyRequests);
+app.patch('/api/company/requests/:id', authMiddleware, requestController.updateRequestStatus);
+
+// 4. Evaluation (Simple Mock for now)
+app.post('/api/evaluation', authMiddleware, async (req, res) => {
+  // TODO: Implement evaluationController
+  console.log('Evaluation received:', req.body);
+  res.json({ ok: true });
+});
+app.get('/api/evaluation/me', authMiddleware, async (req, res) => {
+   res.json([]); 
 });
 
 module.exports = app;
