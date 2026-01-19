@@ -11,6 +11,9 @@ const feedRoutes = require('./routes/feeds');
 const dataController = require('./controllers/dataController');
 const requestController = require('./controllers/requestController');
 const authMiddleware = require('./middleware/auth');
+const profileController = require('./controllers/profileController');
+
+const evaluationRoutes = require('./routes/evaluation');
 
 const app = express();
 app.use(cors());
@@ -44,14 +47,10 @@ app.post('/api/personal/requests', authMiddleware, requestController.createReque
 app.get('/api/company/requests', authMiddleware, requestController.getCompanyRequests);
 app.patch('/api/company/requests/:id', authMiddleware, requestController.updateRequestStatus);
 
-// 4. Evaluation (Simple Mock for now)
-app.post('/api/evaluation', authMiddleware, async (req, res) => {
-  // TODO: Implement evaluationController
-  console.log('Evaluation received:', req.body);
-  res.json({ ok: true });
-});
-app.get('/api/evaluation/me', authMiddleware, async (req, res) => {
-   res.json([]); 
-});
+// profile 호환 (프론트 saveProfile용)
+app.post('/api/profile', authMiddleware, profileController.update);
+
+// evaluation 진짜 구현
+app.use('/api/evaluation', evaluationRoutes);
 
 module.exports = app;
