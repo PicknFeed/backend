@@ -1,6 +1,3 @@
--- Pick&Feed (Minix) 데이터베이스 초기화 스크립트
--- 사용법: MySQL Workbench에서 열어서 전체 실행(⚡)
-
 DROP DATABASE IF EXISTS picknfeed;
 CREATE DATABASE picknfeed
   CHARACTER SET utf8mb4
@@ -19,10 +16,11 @@ CREATE TABLE users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- 2. 프로필 (Profiles) - 개인 유저용
+-- 2. 개인 프로필 (이력서/포지션/스킬)
 CREATE TABLE profiles (
   user_id INT PRIMARY KEY,
   resume_text TEXT NULL,
+  position VARCHAR(100) NULL,
   skills VARCHAR(255) NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -35,6 +33,8 @@ CREATE TABLE profiles (
 CREATE TABLE companies (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
+  position VARCHAR(100) NULL,
+  skills_json TEXT NULL,
   description TEXT NULL,
   icon_url VARCHAR(255) NULL,
   location VARCHAR(100) NULL,
@@ -44,15 +44,15 @@ CREATE TABLE companies (
 -- 4. 매칭 요청 (Requests)
 CREATE TABLE matching_requests (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,      -- 요청한 개인
-  company_id INT NOT NULL,   -- 대상 기업
-  status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+  user_id INT NOT NULL,
+  company_id INT NOT NULL,
+  status ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 5. 평가 (Evaluations)
+-- 5. 평가 (Evaluations) (기업이 작성 → 개인이 조회)
 CREATE TABLE evaluations (
   id INT AUTO_INCREMENT PRIMARY KEY,
   request_id INT NOT NULL, -- 어떤 매칭 건에 대한 평가인지
@@ -60,11 +60,12 @@ CREATE TABLE evaluations (
   score INT NOT NULL,
   comment TEXT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (request_id) REFERENCES matching_requests(id) ON DELETE CASCADE
+  FOREIGN KEY (request_id) REFERENCES matching_requests(id) ON DELETE CASCADE,
+  FOREIGN KEY (evaluator_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 
--- ===== 초기 데이터 주입 =====
+-- 샘플 데이터
 
 -- 1. 회사 데이터
 INSERT INTO companies (name, description, location) VALUES
@@ -75,19 +76,20 @@ INSERT INTO companies (name, description, location) VALUES
 ('Edu Future', '미래 교육을 선도하는 에듀테크', '서울 서초구');
 
 -- 2. 유저 데이터 (비번: 1234)
--- bcrypt hash: $2b$10$e0NRq0w9eZ1sZq5dJYc0J.5Yt1zj0sQk9F7C1gC0y3pQe7Zr6n5eS
+-- 비번: 1234 (너가 기존에 넣던 bcrypt hash 그대로)
 INSERT INTO users (email, password, name, role) VALUES
-('user@test.com', '$2b$10$e0NRq0w9eZ1sZq5dJYc0J.5Yt1zj0sQk9F7C1gC0y3pQe7Zr6n5eS', '김철수', 'PERSONAL'),
+('user@test.com',    '$2b$10$e0NRq0w9eZ1sZq5dJYc0J.5Yt1zj0sQk9F7C1gC0y3pQe7Zr6n5eS', '김철수', 'PERSONAL'),
 ('company@test.com', '$2b$10$e0NRq0w9eZ1sZq5dJYc0J.5Yt1zj0sQk9F7C1gC0y3pQe7Zr6n5eS', '인사담당자', 'COMPANY'),
-('admin@test.com', '$2b$10$e0NRq0w9eZ1sZq5dJYc0J.5Yt1zj0sQk9F7C1gC0y3pQe7Zr6n5eS', '관리자', 'ADMIN');
+('admin@test.com',   '$2b$10$e0NRq0w9eZ1sZq5dJYc0J.5Yt1zj0sQk9F7C1gC0y3pQe7Zr6n5eS', '관리자', 'ADMIN');
 
--- 3. 프로필 데이터
-INSERT INTO profiles (user_id, resume_text, skills) VALUES
-(1, '열정적인 신입 개발자입니다.', 'Flutter, Node.js');
+INSERT INTO profiles (user_id, resume_text, position, skills) VALUES
+(1, '열정적인 신입 개발자입니다.', 'Flutter Developer', 'Flutter, Node.js, MySQL');
 
--- 4. 요청 샘플
+INSERT INTO companies (name, position, skills_json, description, location) VALUES
+('Tech Solution', 'Flutter Developer', '["Flutter","REST","MySQL"]', '혁신적인 IT 솔루션 기업', '서울 강남구'),
+('Creative Design', 'UI/UX Designer', '["Figma","UX","Prototype"]', '디자인 에이전시', '서울 마포구'),
+('Global Data', 'Data Engineer', '["Python","SQL","Airflow"]', '빅데이터/AI 기업', '경기도 성남시');
+
 INSERT INTO matching_requests (user_id, company_id, status) VALUES
 (1, 1, 'PENDING'),
 (1, 2, 'APPROVED');
-
-SELECT * FROM users;
